@@ -1,5 +1,6 @@
 var map;
 var currentTime24, currentTime12; // 전역 변수로 선언
+var zoneName = null; // 전역 변수로 시간대 이름 저장
 
 document.addEventListener('DOMContentLoaded', function() {
     if (navigator.geolocation) {
@@ -48,10 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'OK') {
-                    // 전역 변수에 시간 정보 할당
-                    currentTime24 = moment().tz(data.zoneName).format('YYYY-MM-DD HH:mm:ss');
-                    currentTime12 = moment().tz(data.zoneName).format('YYYY-MM-DD hh:mm:ss A');
-                    displayTime();
+                    zoneName = data.zoneName;
+                    updateCurrentTime();
+                    setInterval(updateCurrentTime, 1000); // 매초마다 시간 업데이트
                 } else {
                     alert("시간대 정보를 찾을 수 없습니다.");
                 }
@@ -61,9 +61,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    function updateCurrentTime() {
+        if (zoneName) {
+            currentTime24 = moment().tz(zoneName).format('YYYY-MM-DD HH:mm:ss');
+            currentTime12 = moment().tz(zoneName).format('YYYY-MM-DD hh:mm:ss A');
+            displayTime();
+        } else {
+            console.log("Zone name not set.");
+        }
+    }
+
     function displayTime() {
         var timeInfo = document.getElementById('timeInfo');
-        // 시간 표시 형식 버튼과 현재 시간 표시
         timeInfo.innerHTML = "<button onclick='toggleTimeFormat()'>AM/PM OR 24TIME</button><div id='timeDisplay'>" + currentTime24 + "</div>";
     }
 
