@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+    <title>World Time Updates</title>
+    <description>Updates on time zones and corresponding local times around the world</description>
+    <link>https://worldtime.co.kr/</link>
+    <item>
+        <title>Time Update for New York</title>
+        <description>Current time and time zone information for New York, updated in real-time</description>
+        <link>https://worldtime.co.kr/new-york</link>
+        <pubDate>Wed, 18 Apr 2024 12:00:00 GMT</pubDate>
+    </item>
+    <item>
+        <title>Time Update for London</title>
+        <description>Current time and time zone information for London, updated in real-time</description>
+        <link>https://worldtime.co.kr/london</link>
+        <pubDate>Wed, 18 Apr 2024 17:00:00 GMT</pubDate>
+    </item>
+    <!-- 추가 시간대 업데이트 항목 -->
+</channel>
+</rss>
