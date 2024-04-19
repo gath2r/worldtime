@@ -1,116 +1,132 @@
 var map;
-var currentTime24, currentTime12; // 전역 변수로 선언
-var zoneName = null; // 전역 변수로 시간대 이름 저장
+var currentMarker;
+var infoWindow;
+var zoneName = null;
+var currentTime24, currentTime12;
+var updateTimeInterval = null;
+var is24HourFormat = true;  // 시간 형식을 추적하는 변수, 초기값은 24시간 형식
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            initMap(lat, lon);
-        }, function() {
-            initMap(51.505, -0.09); // Default location if geolocation fails
-        });
-    } else {
-        alert("Geolocation is not supported by this browser.");
-        initMap(51.505, -0.09); // Default location if geolocation is not supported
-    }
-
-    function initMap(lat, lon) {
-        map = L.map('map').setView([lat, lon], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        map.on('click', function(e) {
-            showMarkerAndTimezone(e.latlng.lat, e.latlng.lng);
-        });
-    }
-
-    function showMarkerAndTimezone(lat, lon) {
-        if (map.currentMarker) {
-            map.removeLayer(map.currentMarker);
-        }
-
-        var customIcon = L.icon({
-            iconUrl: 'https://i.postimg.cc/d3YFsnJB/map-location-icon-129048.png',
-            iconSize: [38, 35],
-            iconAnchor: [22, 34],
-            popupAnchor: [-3, -76]
-        });
-        map.currentMarker = L.marker([lat, lon], {icon: customIcon}).addTo(map);
-
-        fetchTimezoneInfo(lat, lon);
-    }
-
-    function fetchTimezoneInfo(lat, lon) {
-        fetch(`https://api.timezonedb.com/v2.1/get-time-zone?key=QLTUCRKUM8ZG&format=json&by=position&lat=${lat}&lng=${lon}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'OK') {
-                    zoneName = data.zoneName;
-                    updateCurrentTime();
-                    setInterval(updateCurrentTime, 1000); // 매초마다 시간 업데이트
-                } else {
-                    alert("시간대 정보를 찾을 수 없습니다.");
-                }
-            })
-            .catch(error => {
-                alert('시간대 조회 중 오류가 발생했습니다: ' + error.message);
-            });
-    }
-
-    function updateCurrentTime() {
-        if (zoneName) {
-            currentTime24 = moment().tz(zoneName).format('YYYY-MM-DD HH:mm:ss');
-            currentTime12 = moment().tz(zoneName).format('YYYY-MM-DD hh:mm:ss A');
-            displayTime();
-        } else {
-            console.log("Zone name not set.");
-        }
-    }
-
-    function displayTime() {
-        var timeInfo = document.getElementById('timeInfo');
-        timeInfo.innerHTML = "<button onclick='toggleTimeFormat()'>AM/PM OR 24TIME</button><div id='timeDisplay'>" + currentTime24 + "</div>";
-    }
-
-    window.toggleTimeFormat = function() {
-        var timeDisplay = document.getElementById('timeDisplay');
-        if (timeDisplay.innerHTML === currentTime24) {
-            timeDisplay.innerHTML = currentTime12;
-        } else {
-            timeDisplay.innerHTML = currentTime24;
-        }
-    };
-
-    var searchInput = document.getElementById('searchInput');
-    var searchButton = document.getElementById('searchButton');
-
-    searchButton.addEventListener('click', searchLocation);
-    searchInput.addEventListener('keypress', function(event) {
+    initMap();
+    document.getElementById('searchInput').addEventListener('keypress', function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
             searchLocation();
         }
     });
-
-    function searchLocation() {
-        var searchQuery = searchInput.value;
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    var lat = data[0].lat;
-                    var lon = data[0].lon;
-                    map.setView([lat, lon], 13);
-                } else {
-                    alert("No search results found.");
-                }
-            })
-            .catch(error => {
-                alert('Error during search: ' + error.message);
-            });
-    }
 });
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 13,
+        center: {lat: 51.505, lng: -0.09}
+    });
+
+    infoWindow = new google.maps.InfoWindow();
+
+    map.addListener('click', function(e) {
+        showMarkerAndTimezone(e.latLng.lat(), e.latLng.lng());
+        fetchWeather(e.latLng.lat(), e.latLng.lng());
+    });
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            map.setCenter({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            });
+        }, function() {
+            handleLocationError(true, map.getCenter());
+        });
+    }
+}
+
+function showMarkerAndTimezone(lat, lon) {
+    if (currentMarker) {
+        currentMarker.setMap(null);
+    }
+    currentMarker = new google.maps.Marker({
+        position: {lat: lat, lng: lon},
+        map: map
+    });
+    fetchTimezoneInfo(lat, lon);
+}
+
+function fetchWeather(lat, lon) {
+    const apiKey = 'c3f294d7a25fd0c71085f8421fc741ab';
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=kr`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const weather = data.weather[0].description;
+            const temp = data.main.temp;
+            const content = `Temperature: ${temp}°C<br>Weather: ${weather}`;
+            infoWindow.setContent(content);
+            infoWindow.setPosition({lat: lat, lng: lon});
+            infoWindow.open(map);
+            infoWindow.setOptions({
+                pixelOffset: new google.maps.Size(0, -40)  // 정보 창의 위치 조정
+            });
+        })
+        .catch(error => console.error('Error fetching weather data:', error));
+}
+
+function fetchTimezoneInfo(lat, lon) {
+    if (updateTimeInterval) clearInterval(updateTimeInterval);
+    var apiUrl = `http://api.timezonedb.com/v2.1/get-time-zone?key=QLTUCRKUM8ZG&format=json&by=position&lat=${lat}&lng=${lon}`;
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'OK') {
+                zoneName = data.zoneName;
+                updateCurrentTime();
+                updateTimeInterval = setInterval(updateCurrentTime, 1000);
+            } else {
+                alert("Time zone data not found.");
+            }
+        })
+        .catch(error => console.error('Error fetching timezone data:', error));
+}
+
+function updateCurrentTime() {
+    if (zoneName) {
+        currentTime24 = moment().tz(zoneName).format('YYYY-MM-DD HH:mm:ss');
+        currentTime12 = moment().tz(zoneName).format('YYYY-MM-DD hh:mm:ss A');
+        displayTime();
+    }
+}
+
+function displayTime() {
+    var timeInfo = document.getElementById('timeInfo');
+    var displayTime = is24HourFormat ? currentTime24 : currentTime12;
+    timeInfo.innerHTML = `<div id='timeDisplay'>${displayTime}</div><button onclick='toggleTimeFormat()'>Switch to ${is24HourFormat ? "AM/PM" : "24-Hour"}</button>`;
+}
+
+function toggleTimeFormat() {
+    is24HourFormat = !is24HourFormat;
+    displayTime();
+}
+
+function searchLocation() {
+    var searchQuery = document.getElementById('searchInput').value;
+    var geocoder = new google.maps.Geocoder();
+    geocoder.geocode({'address': searchQuery}, function(results, status) {
+        if (status === 'OK') {
+            map.setCenter(results[0].geometry.location);
+            if (currentMarker) currentMarker.setMap(null);
+            currentMarker = new google.maps.Marker({
+                map: map,
+                position: results[0].geometry.location
+            });
+            fetchWeather(results[0].geometry.location.lat(), results[0].geometry.location.lng());
+        } else {
+            alert('Geocode was not successful for the following reason: ' + status);
+        }
+    });
+}
+
+function handleLocationError(browserHasGeolocation, pos) {
+    infoWindow.setPosition(pos);
+    infoWindow.setContent(browserHasGeolocation ? 'Error: The Geolocation service failed.' : 'Error: Your browser doesnt support geolocation.');
+    infoWindow.open(map);
+}
