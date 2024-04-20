@@ -89,7 +89,8 @@ button {
     }
 
     #map {
-        height: 300px; /* 모바일 화면에 맞게 맵의 높이 조정 */
+        height: 50vh; /* 뷰포트 높이의 50%로 설정하여 보이는 부분이 확장되도록 조정 */
+        width: 100%; /* 너비를 화면 전체로 확장 */
     }
 
     #searchContainer, #timeInfo {
