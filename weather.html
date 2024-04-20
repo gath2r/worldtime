@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Map with Weather and Timezone</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_mVZ3b1wi0rxDaeLVZcv5AtUVXqs15gI"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data-2012-2022.min.js"></script>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Enter a location">
+        <button id="searchButton">Search</button>
+    </div>
+    <button id="toggleTimeButton" onclick="toggleTimeFormat()">Switch to AM/PM</button>
+    <div id="timeInfo">
+        <div id="timeDisplay"></div>
+        <div id="weatherInfo"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
