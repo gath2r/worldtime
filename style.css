@@ -83,3 +83,21 @@ button {
 #searchButton:hover {
     background-color: #45a049; /* 호버 상태의 배경 색상 변경 */
 }
+@media (max-width: 768px) {
+    body, input, button {
+        font-size: 16px; /* 큰 글자 크기 */
+    }
+
+    #map {
+        height: 300px; /* 모바일 화면에 맞게 맵의 높이 조정 */
+    }
+
+    #searchContainer, #timeInfo {
+        padding: 20px; /* 더 큰 패딩으로 터치 용이 */
+    }
+
+    #searchButton, #toggleTimeButton {
+        font-size: 14px; /* 버튼의 글자 크기 조정 */
+        padding: 10px 20px; /* 버튼 패딩 조정 */
+    }
+}
