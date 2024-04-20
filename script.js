@@ -73,7 +73,7 @@ function fetchWeather(lat, lon) {
 
 function fetchTimezoneInfo(lat, lon) {
     if (updateTimeInterval) clearInterval(updateTimeInterval);
-    var apiUrl = `http://api.timezonedb.com/v2.1/get-time-zone?key=QLTUCRKUM8ZG&format=json&by=position&lat=${lat}&lng=${lon}`;
+    var apiUrl = `https://api.timezonedb.com/v2.1/get-time-zone?key=QLTUCRKUM8ZG&format=json&by=position&lat=${lat}&lng=${lon}`;
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
